@@ -1,0 +1,6 @@
+,Mean MAE,Std  MAE,Mean MAPE
+SARIMA,9.96,3.66,15.57
+Prophet,22.88,13.67,35.59
+XGBoost,9.99,7.51,15.03
+LightGBM,7.45,8.43,11.71
+Ensemble,11.25,10.27,17.2
