@@ -11,6 +11,18 @@
 
 ---
 
+## 📌 Table of Contents
+- [🏆 Key Results](#-key-results)
+- [🗂️ Project Structure](#️-project-structure)
+- [⚙️ Pipeline Overview](#-pipeline-overview)
+- [🚀 Installation & Usage](#-installation--usage)
+- [🔬 Key Findings & Insights](#-key-findings--insights)
+- [📦 Output Files](#-output-files)
+- [🔮 Future Work](#-future-work)
+- [📄 License](#-license)
+
+---
+
 ## 🏆 Key Results
 
 | Model | Mean MAE (USD/barrel) | Mean MAPE | Notes |
