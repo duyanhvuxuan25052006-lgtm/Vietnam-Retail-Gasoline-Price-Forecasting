@@ -1,7 +1,7 @@
 # Dự báo Giá Xăng Bán lẻ Việt Nam
 
 **Vietnam Retail Gasoline Price Forecasting**  
-**Tác giả**: Vũ Xuân Duy Anh — NEU DSEB Year 2  
+**Tác giả**: Vũ Xuân Duy Anh 
 **Lần chạy pipeline gần nhất**: 2026-06-17
 
 Project dự báo giá bán lẻ xăng Việt Nam cho kỳ điều hành kế tiếp, tập trung vào **RON95** và **E5 RON92**. Dữ liệu giá bán lẻ được ghép với các biến thị trường quốc tế gồm Brent, WTI, DXY, VIX và USD/VND.
