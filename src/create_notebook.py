@@ -1,0 +1,248 @@
+import json
+import os
+
+PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def create_notebook():
+    notebook = {
+        "cells": [
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "# Dự báo Giá Xăng Bán lẻ Việt Nam (Vietnam Retail Gasoline Price Forecasting)\n",
+                    "\n",
+                    "**Tác giả**: Vũ Xuân Duy Anh — DSEB Year 2, Trường Đại học Kinh tế Quốc dân (NEU)  \n",
+                    "**Mục tiêu**: Thực tập sinh Machine Learning — Viện Dầu khí Việt Nam (VPI)  \n",
+                    "\n",
+                    "---\n",
+                    "\n",
+                    "## 1. Giới thiệu & Lý do chọn bài toán\n",
+                    "\n",
+                    "Tại Việt Nam, giá xăng dầu bán lẻ được điều hành bởi Liên Bộ Công Thương - Tài chính vào mỗi **Thứ Năm hàng tuần** (theo Nghị định 80/2023/NĐ-CP). Dự báo chính xác giá xăng trong kỳ điều hành tiếp theo mang lại giá trị thực tiễn rất lớn cho:\n",
+                    "- **Doanh nghiệp đầu mối xăng dầu** (Petrolimex, PVOIL) trong việc tối ưu hóa tồn kho và nhập hàng.\n",
+                    "- **Các cơ quan tham mưu chính sách** (như VPI, Bộ Kế hoạch và Đầu tư) trong việc dự báo chỉ số giá tiêu dùng CPI và lạm phát.\n",
+                    "\n",
+                    "Dự án này tập trung vào **giá bán lẻ xăng nội địa Việt Nam (RON95 và E5 RON92)** — một bài toán đặc thù và có tính thực tế cao hơn nhiều so với bài toán dự báo giá dầu thô thế giới thông thường."
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "## 2. Thiết lập & Tải dữ liệu\n",
+                    "\n",
+                    "Dữ liệu lịch sử giá bán lẻ xăng dầu được cào từ lịch sử điều hành giá của Petrolimex và Bộ Công Thương (từ 2019 đến nay). Các biến đặc trưng thị trường bao gồm giá dầu Brent, WTI, USD Index (DXY), chỉ số biến động VIX và tỷ giá USD/VND được tải trực tiếp từ Yahoo Finance."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "import pandas as pd\n",
+                    "import numpy as np\n",
+                    "import matplotlib.pyplot as plt\n",
+                    "import seaborn as sns\n",
+                    "import os\n",
+                    "\n",
+                    "sns.set_theme(style=\"whitegrid\")\n",
+                    "DATA_PATH = \"data/merged_dataset.csv\"\n",
+                    "\n",
+                    "df = pd.read_csv(DATA_PATH)\n",
+                    "df['date'] = pd.to_datetime(df['date'])\n",
+                    "print(f\"Kích thước dữ liệu: {df.shape}\")\n",
+                    "df.head()"
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "## 3. Phân tích Dữ liệu Khám phá (EDA)\n",
+                    "\n",
+                    "Chúng ta sẽ vẽ biểu đồ biểu diễn xu hướng giá xăng bán lẻ Việt Nam so với biến động giá dầu thô Brent thế giới."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "fig, ax1 = plt.subplots(figsize=(12, 6))\n",
+                    "\n",
+                    "color = 'tab:blue'\n",
+                    "ax1.set_xlabel('Thời gian')\n",
+                    "ax1.set_ylabel('Giá xăng Việt Nam (VND/lít)', color=color)\n",
+                    "ax1.plot(df['date'], df['RON95'], color=color, label='Xăng RON95', linewidth=2)\n",
+                    "ax1.tick_params(axis='y', labelcolor=color)\n",
+                    "\n",
+                    "ax2 = ax1.twinx()\n",
+                    "color = 'tab:orange'\n",
+                    "ax2.set_ylabel('Giá dầu Brent thế giới (USD/thùng)', color=color)\n",
+                    "ax2.plot(df['date'], df['brent'], color=color, label='Dầu Brent', linestyle='--')\n",
+                    "ax2.tick_params(axis='y', labelcolor=color)\n",
+                    "\n",
+                    "plt.title('Mối liên hệ giữa giá xăng RON95 Việt Nam và giá dầu Brent thế giới (2019-2026)')\n",
+                    "fig.tight_layout()\n",
+                    "plt.show()"
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "## 4. Xây dựng Biến Đặc trưng (Feature Engineering) & Tránh rò rỉ dữ liệu (Leakage)\n",
+                    "\n",
+                    "### Quy tắc chống Leakage:\n",
+                    "1. **Căn chỉnh dữ liệu thị trường**: Khi ghép dữ liệu, biến Brent/WTI/DXY/VIX/USDVND được dịch +1 ngày để tại ngày điều hành $t$ mô hình chỉ nhìn thấy giá thị trường đến ngày $t-1$.\n",
+                    "2. **Lag của giá bán lẻ**: `RON95_lag1`, `RON95_lag2` dùng `.shift()` nên không bao giờ dùng giá kỳ hiện tại làm feature.\n",
+                    "3. **Rolling MA/Std**: Tính trên chuỗi thị trường đã được căn chỉnh ở bước (1); mỗi hàng chỉ dùng quan sát cùng hàng và các hàng trước đó.\n",
+                    "4. **Winsorizing**: Ngưỡng phân vị **chỉ fit trên train fold**, rồi mới transform test fold. Không winsorize target $Y$.\n",
+                    "5. **Không back-fill**: Yahoo Finance chỉ `ffill()` để tránh đưa dữ liệu tương lai về quá khứ."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "import os\n",
+                    "import sys\n",
+                    "\n",
+                    "PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd()))\n",
+                    "if PROJECT_ROOT not in sys.path:\n",
+                    "    sys.path.insert(0, PROJECT_ROOT)\n",
+                    "\n",
+                    "from src.features import add_event_dummies, build_lag_and_rolling_features, get_feature_columns\n",
+                    "\n",
+                    "# Thực hiện biến đổi đặc trưng\n",
+                    "df_features = add_event_dummies(df)\n",
+                    "df_features = build_lag_and_rolling_features(df_features)\n",
+                    "feature_cols = get_feature_columns('RON95')\n",
+                    "df_features = df_features.dropna(subset=feature_cols + ['RON95', 'E5_RON92']).reset_index(drop=True)\n",
+                    "print(f\"Số lượng features cho RON95: {len(feature_cols)}\")"
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "## 5. Đánh giá Mô hình với 6-Fold Walk-Forward Cross Validation\n",
+                    "\n",
+                    "Mô hình được đánh giá trên 6 folds tương ứng với các năm từ 2021 đến 2026. Đây là phương pháp chuẩn mực cho dữ liệu chuỗi thời gian."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "summary_path = \"output/model_comparison.csv\"\n",
+                    "if os.path.exists(summary_path):\n",
+                    "    summary_df = pd.read_csv(summary_path)\n",
+                    "    print(summary_df.to_string(index=False))\n",
+                    "else:\n",
+                    "    print(\"Hãy chạy file models.py hoặc pipeline.py để sinh kết quả so sánh mô hình!\")"
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "### Phân tích kết quả:\n",
+                    "- Bảng trên được đọc trực tiếp từ `output/model_comparison.csv`, vì vậy luôn khớp với lần chạy pipeline mới nhất.\n",
+                    "- **Naive Baseline** là benchmark bắt buộc vì giá điều hành thường có quán tính mạnh qua từng kỳ.\n",
+                    "- **XGBoost** được dùng làm mô hình điểm khi là ML model có MAPE tốt nhất; **LightGBM Quantile** được dùng để tạo khoảng tin cậy."
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "## 6. Đóng góp Nghiên cứu & Phân tích Độ nhạy\n",
+                    "\n",
+                    "### 6.1 So sánh Hiệu quả chu kỳ điều hành (7 ngày vs 10 ngày)\n",
+                    "Kết quả định lượng được lưu trong `output/policy_cycle_comparison.csv` và biểu đồ `output/policy_analysis.png`. Pipeline tính weighted MAPE theo số quan sát từng fold để tránh làm lệch kết quả bởi các năm dữ liệu chưa hoàn chỉnh."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "from IPython.display import Image\n",
+                    "policy_path = 'output/policy_cycle_comparison.csv'\n",
+                    "if os.path.exists(policy_path):\n",
+                    "    print(pd.read_csv(policy_path).to_string(index=False))\n",
+                    "Image(filename='output/policy_analysis.png')"
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "### 6.2 Bản đồ Độ nhạy (Sensitivity Heatmap)\n",
+                    "Bản đồ này dự báo mức giá xăng RON95 dựa trên các biến động của giá dầu Brent thế giới và mức can thiệp của Quỹ Bình ổn giá (BOG)."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "Image(filename='output/sensitivity_heatmap.png')"
+                ]
+            },
+            {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    "## 7. Dự báo Giá xăng cho Kỳ Điều hành Tiếp theo\n",
+                    "\n",
+                    "Dưới đây là giá dự báo cho kỳ điều hành Thứ Năm tuần tới. Điểm dự báo dùng **XGBoost**; khoảng tin cậy 95% dùng **LightGBM Quantile Regression**; cột Naive Baseline được giữ để đối chiếu với giá kỳ gần nhất."
+                ]
+            },
+            {
+                "cell_type": "code",
+                "execution_count": None,
+                "metadata": {},
+                "outputs": [],
+                "source": [
+                    "pred_path = \"output/forecast_this_thursday.csv\"\n",
+                    "if os.path.exists(pred_path):\n",
+                    "    pred_df = pd.read_csv(pred_path)\n",
+                    "    print(pred_df.to_string(index=False))\n",
+                    "else:\n",
+                    "    print(\"Hãy chạy file analysis.py hoặc pipeline.py để tạo dự báo!\")"
+                ]
+            }
+        ],
+        "metadata": {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3"
+            },
+            "language_info": {
+                "name": "python"
+            }
+        },
+        "nbformat": 4,
+        "nbformat_minor": 2
+    }
+    
+    output_path = os.path.join(PROJECT_DIR, "oil_price_forecasting.ipynb")
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(notebook, f, ensure_ascii=False, indent=2)
+        
+    print(f"Created Jupyter Notebook at {output_path}")
+
+if __name__ == "__main__":
+    create_notebook()
