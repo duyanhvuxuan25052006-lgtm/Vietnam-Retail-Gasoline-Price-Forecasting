@@ -64,7 +64,7 @@ def weighted_average(values, weights):
 
 
 def run_policy_cycle_comparison(raw_df):
-    print("\nRunning policy cycle comparison (7-day vs 10-day)...")
+    print("\nRunning policy-cycle resampling comparison (7-day vs 10-day)...")
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     resample_periods = {'7D': '7-day cycle', '10D': '10-day cycle'}
@@ -115,16 +115,16 @@ def run_policy_cycle_comparison(raw_df):
         print(f"Weighted MAPE for {label}: {avg_mape:.2f}%")
 
     result_df = pd.DataFrame({
-        'Policy_Cycle': list(cycle_results.keys()),
+        'Resample_Cycle': list(cycle_results.keys()),
         'Weighted_MAPE_RON95': list(cycle_results.values()),
     })
     result_df.to_csv(os.path.join(OUTPUT_DIR, "policy_cycle_comparison.csv"), index=False)
 
     plt.figure(figsize=(8, 5))
-    ax = sns.barplot(data=result_df, x='Policy_Cycle', y='Weighted_MAPE_RON95', color='#2f6f73')
-    plt.title('Forecasting Error by Policy Cycle')
+    ax = sns.barplot(data=result_df, x='Resample_Cycle', y='Weighted_MAPE_RON95', color='#2f6f73')
+    plt.title('Forecasting Error by Resampled Cycle')
     plt.ylabel('Weighted MAPE (%)')
-    plt.xlabel('Policy Cycle')
+    plt.xlabel('Resampled Cycle')
     for container in ax.containers:
         ax.bar_label(container, fmt='%.2f%%', padding=3, fontweight='bold')
 
@@ -137,7 +137,7 @@ def run_policy_cycle_comparison(raw_df):
 
 
 def run_sensitivity_analysis(feature_df):
-    print("\nRunning policy sensitivity analysis...")
+    print("\nRunning scenario sensitivity analysis...")
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     feature_cols = get_feature_columns('RON95')
@@ -301,6 +301,8 @@ def make_predictions_for_next_thursday(raw_df, feature_df):
 
     latest_retail_date = raw_df['date'].max()
     next_date = next_thursday_after(latest_retail_date)
+    generated_on = pd.Timestamp.today().normalize()
+    forecast_status = 'stale' if next_date.normalize() < generated_on else 'current_or_future'
     forecast_row, market_as_of = build_forecast_row(raw_df, next_date)
 
     ron95_models = fit_forecast_models(feature_df, 'RON95')
@@ -314,19 +316,21 @@ def make_predictions_for_next_thursday(raw_df, feature_df):
 
     predictions_path = os.path.join(OUTPUT_DIR, "forecast_this_thursday.csv")
     pred_df = pd.DataFrame({
+        'Generated_On': [generated_on.strftime('%Y-%m-%d')],
+        'Forecast_Status': [forecast_status],
         'Date': [next_date.strftime('%Y-%m-%d')],
         'Market_Data_As_Of': [pd.Timestamp(market_as_of).strftime('%Y-%m-%d')],
         'Latest_Retail_Date': [latest_retail_date.strftime('%Y-%m-%d')],
         'Forecast_Point_Model': ['XGBoost'],
-        'Interval_Model': ['LightGBM Quantile'],
+        'Interval_Model': ['LightGBM Quantile 2.5%-97.5%'],
         'RON95_Naive_Baseline': [raw_df['RON95'].iloc[-1]],
         'RON95_Forecast': [pred_ron95],
-        'RON95_Lower_CI': [lower_ron95],
-        'RON95_Upper_CI': [upper_ron95],
+        'RON95_Lower_PI': [lower_ron95],
+        'RON95_Upper_PI': [upper_ron95],
         'E5_Naive_Baseline': [raw_df['E5_RON92'].iloc[-1]],
         'E5_Forecast': [pred_e5],
-        'E5_Lower_CI': [lower_e5],
-        'E5_Upper_CI': [upper_e5],
+        'E5_Lower_PI': [lower_e5],
+        'E5_Upper_PI': [upper_e5],
     })
     pred_df.to_csv(predictions_path, index=False)
     print(f"Predictions saved to {predictions_path}")

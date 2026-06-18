@@ -22,7 +22,7 @@ MARKET_COLS = list(MARKET_TICKERS.values())
 
 def download_retail_prices():
     os.makedirs(DATA_DIR, exist_ok=True)
-    print("Downloading historical retail gasoline prices from github...")
+    print("Downloading historical retail gasoline prices from the toanqng/fuel open-source dataset...")
     url = "https://raw.githubusercontent.com/toanqng/fuel/master/fuel-vietnam.json"
     
     try:

@@ -32,7 +32,7 @@ def create_notebook():
                 "source": [
                     "## 2. Thiết lập & Tải dữ liệu\n",
                     "\n",
-                    "Dữ liệu lịch sử giá bán lẻ xăng dầu được cào từ lịch sử điều hành giá của Petrolimex và Bộ Công Thương (từ 2019 đến nay). Các biến đặc trưng thị trường bao gồm giá dầu Brent, WTI, USD Index (DXY), chỉ số biến động VIX và tỷ giá USD/VND được tải trực tiếp từ Yahoo Finance."
+                    "Dữ liệu lịch sử giá bán lẻ xăng dầu được lấy từ bộ dữ liệu mã nguồn mở `toanqng/fuel`, bộ dữ liệu này ghi nguồn tham chiếu là Petrolimex. Project lưu snapshot đã làm sạch trong `data/` để tái lập kết quả. Các biến đặc trưng thị trường gồm Brent, WTI, USD Index (DXY), VIX và USD/VND được tải từ Yahoo Finance."
                 ]
             },
             {
@@ -157,7 +157,7 @@ def create_notebook():
                     "### Phân tích kết quả:\n",
                     "- Bảng trên được đọc trực tiếp từ `output/model_comparison.csv`, vì vậy luôn khớp với lần chạy pipeline mới nhất.\n",
                     "- **Naive Baseline** là benchmark bắt buộc vì giá điều hành thường có quán tính mạnh qua từng kỳ.\n",
-                    "- **XGBoost** được dùng làm mô hình điểm khi là ML model có MAPE tốt nhất; **LightGBM Quantile** được dùng để tạo khoảng tin cậy."
+                    "- **XGBoost** được dùng làm mô hình điểm khi là ML model có MAPE tốt nhất; **LightGBM Quantile** được dùng để tạo khoảng dự báo 2.5%-97.5%."
                 ]
             },
             {
@@ -166,8 +166,8 @@ def create_notebook():
                 "source": [
                     "## 6. Đóng góp Nghiên cứu & Phân tích Độ nhạy\n",
                     "\n",
-                    "### 6.1 So sánh Hiệu quả chu kỳ điều hành (7 ngày vs 10 ngày)\n",
-                    "Kết quả định lượng được lưu trong `output/policy_cycle_comparison.csv` và biểu đồ `output/policy_analysis.png`. Pipeline tính weighted MAPE theo số quan sát từng fold để tránh làm lệch kết quả bởi các năm dữ liệu chưa hoàn chỉnh."
+                    "### 6.1 So sánh resampling chu kỳ 7 ngày vs 10 ngày\n",
+                    "Kết quả định lượng được lưu trong `output/policy_cycle_comparison.csv` và biểu đồ `output/policy_analysis.png`. Pipeline tính weighted MAPE theo số quan sát từng fold để tránh làm lệch kết quả bởi các năm dữ liệu chưa hoàn chỉnh. Đây là stress test theo tần suất dữ liệu, không phải kết luận nhân quả về hiệu quả chính sách."
                 ]
             },
             {
@@ -206,7 +206,7 @@ def create_notebook():
                 "source": [
                     "## 7. Dự báo Giá xăng cho Kỳ Điều hành Tiếp theo\n",
                     "\n",
-                    "Dưới đây là giá dự báo cho kỳ điều hành Thứ Năm tuần tới. Điểm dự báo dùng **XGBoost**; khoảng tin cậy 95% dùng **LightGBM Quantile Regression**; cột Naive Baseline được giữ để đối chiếu với giá kỳ gần nhất."
+                    "Dưới đây là giá dự báo cho kỳ điều hành Thứ Năm tuần tới. Điểm dự báo dùng **XGBoost**; khoảng dự báo 2.5%-97.5% dùng **LightGBM Quantile Regression**; cột Naive Baseline được giữ để đối chiếu với giá kỳ gần nhất."
                 ]
             },
             {

@@ -3,7 +3,6 @@ import sys
 import time
 import subprocess
 
-subprocess.run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"], check=True)
 # Set encoding for Windows console
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -53,7 +52,7 @@ def main():
     print("\n==========================================")
     print(" Pipeline completed successfully!")
     print(" Output files generated in the 'output' directory:")
-    print(" - output/forecast_this_thursday.csv (Next Thursday Forecasts & 95% CI)")
+    print(" - output/forecast_this_thursday.csv (Next Thursday forecasts & model-based 95% prediction intervals)")
     print(" - output/model_comparison.csv (MAPE comparison across models)")
     print(" - output/policy_cycle_comparison.csv (7-day vs 10-day weighted MAPE)")
     print(" - output/sensitivity_matrix.csv (Brent vs BOG scenario grid)")
