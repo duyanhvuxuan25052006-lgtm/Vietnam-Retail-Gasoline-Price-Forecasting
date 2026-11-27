@@ -13,7 +13,7 @@ def create_notebook():
                     "# Dự báo Giá Xăng Bán lẻ Việt Nam (Vietnam Retail Gasoline Price Forecasting)\n",
                     "\n",
                     "**Tác giả**: Vũ Xuân Duy Anh — DSEB Year 2, Trường Đại học Kinh tế Quốc dân (NEU)  \n",
-                    "**Mục tiêu**: Thực tập sinh Machine Learning — Viện Dầu khí Việt Nam (VPI)  \n",
+                    "**Mục tiêu**: Đánh giá dự báo một kỳ so với giá bán lẻ kỳ trước  \n",
                     "\n",
                     "---\n",
                     "\n",

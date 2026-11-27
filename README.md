@@ -12,7 +12,7 @@ Weighted MAPE qua walk-forward validation, tính trọng số theo số quan sá
 
 | Model | RON95 MAPE | E5 RON92 MAPE |
 |---|---:|---:|
-| Naive Baseline | 3.73% | 3.80% |
+| Naive Baseline | 2.62% | 2.60% |
 | XGBoost | 4.12% | 4.27% |
 | MLP Neural Net (Appendix) | 5.54% | 5.94% |
 | LightGBM | 6.65% | 6.47% |
