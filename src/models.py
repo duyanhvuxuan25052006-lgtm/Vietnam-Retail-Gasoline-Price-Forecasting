@@ -73,6 +73,8 @@ def run_evaluation_for_target(df, target):
         train_df = df.iloc[train_idx].copy()
         test_df = df.iloc[test_idx].copy()
         
+        # Persistence uses the observed previous price, including extremes.
+        naive_pred = test_df[f'{target}_lag1'].to_numpy(copy=True)
         train_df, test_df = apply_winsorizing(
             train_df,
             test_df,
@@ -83,7 +85,6 @@ def run_evaluation_for_target(df, target):
         X_test, y_test = test_df[feature_cols], test_df[target]
         
         # 1. Naive Baseline
-        naive_pred = test_df[f'{target}_lag1'].values
         naive_mape = calculate_mape(y_test.values, naive_pred)
         
         # 2. SARIMA
